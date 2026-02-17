@@ -108,44 +108,57 @@ fun generarRFC(nombre: String, paterno: String, materno: String, fecha: String):
     val pat = paterno.uppercase().trim()
     val mat = materno.uppercase().trim()
 
-    // Regla 1. Apellido Paterno
     val letra1 = if (pat.isNotEmpty()) pat[0] else '_'
     val vocalInterna = if (pat.length > 1) {
         pat.drop(1).firstOrNull { it in "AEIOU" } ?: 'X'
     } else {
         '_'
     }
-
-    // --- Reglaa 2. apellido materno
     val letra3 = if (mat.isNotEmpty()) mat[0] else '_'
-    // --- Regla 3. Nombre ---
     val letra4 = if (nom.isNotEmpty()) nom[0] else '_'
-
-    // --- Regla 4. fecha
     var fechaFormato = "______"
-    if (fecha.length == 10) {
-        try {
-            val partes = fecha.split("/")
-            if (partes.size == 3) {
-                val anio = partes[2].takeLast(2)
-                val mes = partes[1]
-                val dia = partes[0]
-                fechaFormato = "$anio$mes$dia"
+
+
+    if (fecha.contains("/")) {
+        val partes = fecha.split("/")
+        if (partes.size == 3) {
+            val dia = partes[0]
+            val mes = partes[1]
+            val anio = partes[2]
+            val diaInt = dia.toIntOrNull()
+            val mesInt = mes.toIntOrNull()
+
+
+
+
+            if (
+                diaInt != null && mesInt != null &&
+                diaInt in 1..31 &&
+                mesInt in 1..12 &&
+                anio.length == 4
+            ) {
+                fechaFormato = anio.takeLast(2) +
+                        mes.padStart(2, '0') +
+                        dia.padStart(2, '0')
             }
-        } catch (e: Exception) {
-            fechaFormato = "ERROR "
         }
     }
 
-    // Regla 5. homoclave
-    // Solo generamos los randoms si tenemos todos los datos anteriores
-    val faltanDatos = (letra1 =='_' || vocalInterna =='_' || letra3 =='_' || letra4 =='_' || fechaFormato.contains('_'))
-    val homoclave = if (faltanDatos) {
-        "XXX"
-    } else {
-        val letrasRandom = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        (1..3).map { letrasRandom.random() }.joinToString("")
-    }
 
-    return "$letra1$vocalInterna$letra3$letra4$fechaFormato$homoclave"
+
+    // Construcción RFC
+    var rfcBase = "$letra1$vocalInterna$letra3$letra4"
+    // Palabras prohibidas
+    val palabrasProhibidas = listOf(
+        "BUEI", "BUEY", "CACA", "CACO", "CAGA",
+        "KAKA", "LOCA", "LOCO", "MAME", "MAMO",
+        "PENE", "PITO", "CULO", "TETA"
+    )
+
+
+
+    if (rfcBase in palabrasProhibidas) {
+        rfcBase = rfcBase.substring(0, 3) + "X"
+    }
+    return rfcBase + fechaFormato
 }
